@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Session, ToastMessage, JobQueueItem, OptimizationResult } from '../types';
 import Navbar from '../components/layout/Navbar';
 import Toast from '../components/ui/Toast';
@@ -29,11 +29,6 @@ const mockJobsInQueue: JobQueueItem[] = [
     { id: 'job_2', title: 'UI/UX Engineer @ CreativeMinds...', status: 'processing', result: null },
 ];
 
-const mockSelectedJob: JobQueueItem = mockJobsInQueue[0];
-
-type PreviewState = 'dashboard' | 'queue' | 'results';
-
-
 // Main Application Page
 const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     const { language } = useLanguage();
@@ -41,9 +36,10 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     const [jobsQueue, setJobsQueue] = useState<JobQueueItem[]>([]);
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
     const [toast, setToast] = useState<ToastMessage | null>(null);
+    const isDemoMode = useMemo(() => import.meta.env.VITE_DEMO_MODE === 'true', []);
     
-    // State for developer preview
-    const [previewState, setPreviewState] = useState<PreviewState>('dashboard');
+    // State for developer preview (demo mode only)
+    const [previewState, setPreviewState] = useState<'dashboard' | 'queue' | 'results'>('dashboard');
 
 
     const showToast = (message: string, type: 'success' | 'error') => {
@@ -120,55 +116,60 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         }
     }
     
-    const DevPreviewControls = () => (
-      <div className="p-4 mb-8 border border-dashed rounded-lg bg-yellow-900/20 border-yellow-500/30">
-          <h3 className="font-semibold text-yellow-300">Developer Preview Controls</h3>
-          <p className="text-sm text-yellow-400/80">Use these buttons to navigate between different UI states for screenshots.</p>
-          <div className="flex flex-wrap gap-2 mt-3">
-              <button onClick={() => setPreviewState('dashboard')} className="px-3 py-1 text-sm text-white bg-gray-700 rounded-md hover:bg-gray-600">Dashboard</button>
-              <button onClick={() => setPreviewState('queue')} className="px-3 py-1 text-sm text-white bg-gray-700 rounded-md hover:bg-gray-600">Queue (Processing)</button>
-              <button onClick={() => setPreviewState('results')} className="px-3 py-1 text-sm text-white bg-gray-700 rounded-md hover:bg-gray-600">Results Page</button>
-          </div>
-      </div>
-    );
+    const DevPreviewControls = () => {
+        if (!isDemoMode) return null;
+        return (
+            <div className="p-4 mb-8 border border-dashed rounded-lg bg-yellow-900/20 border-yellow-500/30">
+                <h3 className="font-semibold text-yellow-300">Developer Preview Controls</h3>
+                <p className="text-sm text-yellow-400/80">Use these buttons to navigate between different UI states for screenshots.</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                    <button onClick={() => setPreviewState('dashboard')} className="px-3 py-1 text-sm text-white bg-gray-700 rounded-md hover:bg-gray-600">Dashboard</button>
+                    <button onClick={() => setPreviewState('queue')} className="px-3 py-1 text-sm text-white bg-gray-700 rounded-md hover:bg-gray-600">Queue (Processing)</button>
+                    <button onClick={() => setPreviewState('results')} className="px-3 py-1 text-sm text-white bg-gray-700 rounded-md hover:bg-gray-600">Results Page</button>
+                </div>
+            </div>
+        );
+    };
     
     const renderContent = () => {
-        if (previewState === 'results') {
-             return <ResultsView
-                        job={mockSelectedJob}
+        if (isDemoMode && previewState !== 'dashboard') {
+            if (previewState === 'results') {
+                return (
+                    <ResultsView
+                        job={mockJobsInQueue[0]}
                         onBack={() => setPreviewState('dashboard')}
-                        onRefine={async () => {
-                            showToast('This is a mock refinement!', 'success');
-                        }}
+                        onRefine={async () => showToast('This is a mock refinement!', 'success')}
                     />
+                );
+            }
+            if (previewState === 'queue') {
+                return (
+                    <div className="flex flex-col max-w-3xl mx-auto space-y-8">
+                        <JobsQueue jobs={mockJobsInQueue} onSelectJob={() => setPreviewState('results')} />
+                    </div>
+                );
+            }
         }
-        
-        if (previewState === 'queue') {
-            return (
-                 <div className="flex flex-col max-w-3xl mx-auto space-y-8">
-                    <JobsQueue jobs={mockJobsInQueue} onSelectJob={() => setPreviewState('results')} />
-                </div>
-            )
-        }
-        
-        // Default: dashboard
+
         return (
             <div className="flex flex-col max-w-3xl mx-auto space-y-8">
                 <OptimizationForm onStartOptimization={handleStartOptimization} />
                 <JobsQueue jobs={jobsQueue} onSelectJob={setSelectedJobId} />
             </div>
         );
-    }
-    
+    };
+
     // Fallback logic for actual interaction
     const selectedJob = jobsQueue.find(job => job.id === selectedJobId);
     const determineCurrentStep = (): StepId => {
         if (selectedJob) {
             return selectedJob.status === 'processing' ? 'processing' : 'results';
         }
-        if (previewState === 'results') return 'results';
-        if (previewState === 'queue') return 'processing';
         if (jobsQueue.some(job => job.status === 'processing')) return 'processing';
+        if (isDemoMode) {
+            if (previewState === 'results') return 'results';
+            if (previewState === 'queue') return 'processing';
+        }
         return 'input';
     };
     const currentStep = determineCurrentStep();
