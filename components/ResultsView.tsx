@@ -23,10 +23,14 @@ const ResultsContent: React.FC<{ result: OptimizationResult; isRTL: boolean; t: 
             setTimeout(() => setCopied(false), 2000);
         }
     }, [result]);
+    const copyLabelSpacing = isRTL ? 'mr-2' : 'ml-2';
 
     return (
         <div className={`space-y-6 text-gray-800 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h3 className="text-xl font-bold text-slate-900">{t.resultsHeading}</h3>
+            <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">{t.steps.results.label}</p>
+                <h3 className="text-xl font-bold text-slate-900">{t.steps.results.title}</h3>
+            </div>
 
             <div className="p-4 text-center bg-primary-50 rounded-lg">
                 <p className="text-sm font-medium text-primary-700">{t.matchScoreLabel}</p>
@@ -53,7 +57,7 @@ const ResultsContent: React.FC<{ result: OptimizationResult; isRTL: boolean; t: 
                     <h4 className="font-semibold text-slate-800">{t.optimizedPreview}</h4>
                      <button onClick={handleCopy} className="inline-flex items-center px-2 py-1 text-xs border rounded-md text-slate-600 border-slate-300 hover:bg-slate-100">
                         {copied ? <CheckIcon className="w-4 h-4 text-green-500" /> : <CopyIcon className="w-4 h-4" />}
-                        <span className="ml-2">{copied ? t.copied : t.copyMarkdown}</span>
+                        <span className={copyLabelSpacing}>{copied ? t.copied : t.copyMarkdown}</span>
                     </button>
                 </div>
                 <div
@@ -101,7 +105,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({ job, onBack, onRefine }) => {
                 {/* Left Panel - Refine */}
                 <Card className="sticky md:col-span-2 top-8">
                     <form onSubmit={handleRefineSubmit} className="space-y-4">
-                        <h2 className="text-lg font-semibold text-slate-100">{t.refineHeading}</h2>
+                        <div className="space-y-1">
+                            <p className="text-xs uppercase tracking-wide text-slate-400">{t.steps.refine.label}</p>
+                            <h2 className="text-lg font-semibold text-slate-100">{t.steps.refine.title}</h2>
+                        </div>
                         <p className="text-sm text-slate-400">
                             {t.refineDescription}
                         </p>

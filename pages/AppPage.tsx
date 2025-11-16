@@ -5,7 +5,9 @@ import Toast from '../components/ui/Toast';
 import OptimizationForm from '../components/OptimizationForm';
 import JobsQueue from '../components/JobsQueue';
 import ResultsView from '../components/ResultsView';
+import StepIndicator from '../components/StepIndicator';
 import { useLanguage } from '../contexts/LanguageContext';
+import type { StepId } from '../translations';
 
 // --- MOCK DATA FOR DEMO ---
 const mockCompleteJobResult: OptimizationResult = {
@@ -160,6 +162,16 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     
     // Fallback logic for actual interaction
     const selectedJob = jobsQueue.find(job => job.id === selectedJobId);
+    const determineCurrentStep = (): StepId => {
+        if (selectedJob) {
+            return selectedJob.status === 'processing' ? 'processing' : 'results';
+        }
+        if (previewState === 'results') return 'results';
+        if (previewState === 'queue') return 'processing';
+        if (jobsQueue.some(job => job.status === 'processing')) return 'processing';
+        return 'input';
+    };
+    const currentStep = determineCurrentStep();
     const containerClasses = `min-h-screen bg-gray-900 ${isRTL ? 'text-right' : 'text-left'}`;
     const direction = isRTL ? 'rtl' : 'ltr';
 
@@ -169,6 +181,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                 <Navbar userEmail={session.user.email} />
                 {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
                 <main className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
+                     <StepIndicator current={currentStep} />
                      <ResultsView
                         job={selectedJob}
                         onBack={() => setSelectedJobId(null)}
@@ -185,6 +198,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
             {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
 
             <main className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
+                <StepIndicator current={currentStep} />
                 <DevPreviewControls />
                 {renderContent()}
             </main>

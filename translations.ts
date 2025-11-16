@@ -1,8 +1,60 @@
 import { useLanguage } from './contexts/LanguageContext';
 
+export type StepId = 'input' | 'processing' | 'results' | 'refine';
+
 export type SupportedLanguage = 'en' | 'ar';
 
-const translations: Record<SupportedLanguage, Record<string, string>> = {
+interface StepTranslation {
+  label: string;
+  title: string;
+}
+
+interface TranslationStrings {
+  navTitle: string;
+  resumeSectionTitle: string;
+  resumeSectionDescription: string;
+  uploadLabel: string;
+  orDivider: string;
+  resumePlaceholder: string;
+  jobSectionTitle: string;
+  jobSectionDescription: string;
+  jobDescriptionPlaceholder: string;
+  customSectionTitle: string;
+  customSectionDescription: string;
+  customPlaceholder: string;
+  analyzeButton: string;
+  contentLanguageLabel: string;
+  languageEnglish: string;
+  languageArabic: string;
+  jobTitleLabel: string;
+  jobTitlePlaceholder: string;
+  companyLabel: string;
+  companyPlaceholder: string;
+  errorResumeMissing: string;
+  errorJobMissing: string;
+  queueTitle: string;
+  queueProcessing: string;
+  queueComplete: string;
+  resultsHeading: string;
+  backToDashboard: string;
+  refineHeading: string;
+  refineDescription: string;
+  refinePlaceholder: string;
+  refineButton: string;
+  refiningButton: string;
+  matchScoreLabel: string;
+  keywordAnalysis: string;
+  changeLog: string;
+  optimizedPreview: string;
+  copyMarkdown: string;
+  copied: string;
+  resultsGenerating: string;
+  resultsGeneratingSub: string;
+  instructionsError: string;
+  steps: Record<StepId, StepTranslation>;
+}
+
+const translations: Record<SupportedLanguage, TranslationStrings> = {
   en: {
     navTitle: 'AI Resume Optimizer',
     resumeSectionTitle: '1. Your Resume',
@@ -45,6 +97,12 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     resultsGenerating: 'Your results are being generated...',
     resultsGeneratingSub: 'This may take a moment.',
     instructionsError: 'Please provide refinement instructions.',
+    steps: {
+      input: { label: 'Step 1', title: 'Input Details' },
+      processing: { label: 'Step 2', title: 'Processing' },
+      results: { label: 'Step 3', title: 'Optimization Results' },
+      refine: { label: 'Step 4', title: 'Refine with AI' },
+    },
   },
   ar: {
     navTitle: 'منسق السيرة الذاتية بالذكاء الاصطناعي',
@@ -88,6 +146,12 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     resultsGenerating: 'يتم الآن إنشاء النتائج...',
     resultsGeneratingSub: 'قد يستغرق ذلك لحظات.',
     instructionsError: 'يرجى إدخال تعليمات التحسين.',
+    steps: {
+      input: { label: 'الخطوة ١', title: 'إدخال البيانات' },
+      processing: { label: 'الخطوة ٢', title: 'جاري المعالجة' },
+      results: { label: 'الخطوة ٣', title: 'نتائج التحسين' },
+      refine: { label: 'الخطوة ٤', title: 'تحسين باستخدام الذكاء الاصطناعي' },
+    },
   },
 };
 
@@ -95,3 +159,5 @@ export const useTranslations = () => {
   const { language } = useLanguage();
   return translations[language];
 };
+
+export type Translations = TranslationStrings;
