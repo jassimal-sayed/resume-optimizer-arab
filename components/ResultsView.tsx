@@ -18,6 +18,7 @@ const ResultsView: React.FC<{
     const [refineInstructions, setRefineInstructions] = useState('');
     const [isRefining, setIsRefining] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showAnalysis, setShowAnalysis] = useState(false);
 
     const handleRefineSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,11 +69,6 @@ const ResultsView: React.FC<{
                            {job.status === 'processing' ? t.refiningButton : t.refineButton}
                         </Button>
                     </form>
-                    {job.result && (
-                        <div className="mt-8">
-                            <ResultsSummaryPanel result={job.result} isRTL={isRTL} t={t} />
-                        </div>
-                    )}
                 </Card>
 
                 {/* Right Panel - Results Document */}
@@ -87,7 +83,19 @@ const ResultsView: React.FC<{
                                 <div className="px-4 py-2 bg-primary-50 rounded-lg text-primary-700 font-semibold">
                                     {t.matchScoreLabel}: {job.result.score}%
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAnalysis(prev => !prev)}
+                                    className="px-4 py-2 text-sm rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                >
+                                    {showAnalysis ? t.analysisHide : t.analysisShow}
+                                </button>
                             </div>
+                            {showAnalysis && (
+                                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                                    <ResultsSummaryPanel result={job.result} isRTL={isRTL} t={t} />
+                                </div>
+                            )}
                             <ResumePreviewPanel result={job.result} isRTL={isRTL} t={t} />
                         </div>
                     ) : (
