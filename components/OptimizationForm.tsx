@@ -5,6 +5,7 @@ import { Button } from './ui/Button';
 import { UploadIcon } from './ui/Icons';
 import { useTranslations } from '../translations';
 import { useLanguage } from '../contexts/LanguageContext';
+import type { LanguageCode } from '../types';
 
 interface OptimizationFormProps {
     onStartOptimization: (data: {
@@ -14,7 +15,9 @@ interface OptimizationFormProps {
         customInstructions: string;
         jobTitle: string;
         companyName: string;
-        contentLanguage: 'en' | 'ar';
+        resumeLang: LanguageCode;
+        jobDescriptionLang: LanguageCode;
+        desiredOutputLang: LanguageCode;
     }) => Promise<void>;
 }
 
@@ -28,7 +31,9 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
     const [customInstructions, setCustomInstructions] = useState('');
     const [jobTitle, setJobTitle] = useState('');
     const [companyName, setCompanyName] = useState('');
-    const [contentLanguage, setContentLanguage] = useState<'en' | 'ar'>(language);
+    const [resumeLanguage, setResumeLanguage] = useState<LanguageCode>(language);
+    const [jobDescriptionLanguage, setJobDescriptionLanguage] = useState<LanguageCode>(language);
+    const [desiredOutputLanguage, setDesiredOutputLanguage] = useState<LanguageCode>(language);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -60,13 +65,15 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
             customInstructions,
             jobTitle,
             companyName,
-            contentLanguage,
+            resumeLang: resumeLanguage,
+            jobDescriptionLang: jobDescriptionLanguage,
+            desiredOutputLang: desiredOutputLanguage,
         });
         setIsLoading(false);
     };
     
-    const baseTextareaClasses = 'block w-full text-sm bg-gray-700 text-slate-200 border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 placeholder:text-gray-400';
-    const getTextareaClasses = (contentLang?: 'en' | 'ar') => {
+    const baseTextareaClasses = 'block w-full text-sm bg-gray-700 text-slate-100 border border-gray-500 rounded-md shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 placeholder:text-gray-300';
+    const getTextareaClasses = (contentLang?: LanguageCode) => {
         const rtl = isRTL || contentLang === 'ar';
         return `${baseTextareaClasses} ${rtl ? 'text-right' : 'text-left'}`;
     };
@@ -74,25 +81,38 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
     return (
         <Card>
             <form onSubmit={handleSubmit} className="space-y-8">
-                {/* --- Language & Job Meta --- */}
-                <div className={`grid grid-cols-1 gap-4 md:grid-cols-3 ${isRTL ? 'text-right' : 'text-left'}`}>
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-slate-100">{t.contentLanguageLabel}</label>
-                        <div className="flex rounded-md bg-gray-700 p-1">
-                            {(['en', 'ar'] as const).map(lang => (
-                                <button
-                                    key={lang}
-                                    type="button"
-                                    onClick={() => setContentLanguage(lang)}
-                                    className={`flex-1 py-2 text-sm rounded-md transition ${
-                                        contentLanguage === lang ? 'bg-primary-500 text-white' : 'text-slate-300'
-                                    }`}
-                                >
-                                    {lang === 'en' ? t.languageEnglish : t.languageArabic}
-                                </button>
-                            ))}
-                        </div>
+                {/* --- Language Preferences --- */}
+                <div className={`space-y-3 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <p className="text-sm font-medium text-slate-100">{t.contentLanguageLabel}</p>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        {[
+                            { label: t.resumeLanguageLabel, value: resumeLanguage, setter: setResumeLanguage },
+                            { label: t.jobDescriptionLanguageLabel, value: jobDescriptionLanguage, setter: setJobDescriptionLanguage },
+                            { label: t.desiredOutputLanguageLabel, value: desiredOutputLanguage, setter: setDesiredOutputLanguage },
+                        ].map(({ label, value, setter }) => (
+                            <div key={label} className="space-y-2">
+                                <span className="block text-xs font-semibold uppercase tracking-wide text-slate-300">{label}</span>
+                                <div className="flex rounded-md bg-gray-700 p-1">
+                                    {(['en', 'ar'] as LanguageCode[]).map(lang => (
+                                        <button
+                                            key={lang}
+                                            type="button"
+                                            onClick={() => setter(lang)}
+                                            className={`flex-1 py-2 text-sm rounded-md transition ${
+                                                value === lang ? 'bg-primary-500 text-white' : 'text-slate-300'
+                                            }`}
+                                        >
+                                            {lang === 'en' ? t.languageEnglish : t.languageArabic}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
+                </div>
+
+                {/* --- Job Meta --- */}
+                <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${isRTL ? 'text-right' : 'text-left'}`}>
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-slate-100">{t.jobTitleLabel}</label>
                         <input
@@ -138,7 +158,7 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                         onChange={e => { setResumeText(e.target.value); setResumeFile(null); setError(null); }}
                         rows={8}
                         placeholder={t.resumePlaceholder}
-                        className={`${getTextareaClasses(contentLanguage)} min-h-[180px] sm:min-h-[220px]`}
+                        className={`${getTextareaClasses(resumeLanguage)} min-h-[180px] sm:min-h-[220px]`}
                     />
                 </div>
 
@@ -151,7 +171,7 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                         onChange={e => { setJobDescription(e.target.value); setError(null); }}
                         rows={10}
                         placeholder={t.jobDescriptionPlaceholder}
-                        className={`${getTextareaClasses(contentLanguage)} min-h-[200px] sm:min-h-[260px]`}
+                        className={`${getTextareaClasses(jobDescriptionLanguage)} min-h-[200px] sm:min-h-[260px]`}
                         required
                     />
                 </div>
@@ -165,7 +185,7 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                         onChange={e => setCustomInstructions(e.target.value)}
                         rows={4}
                         placeholder={t.customPlaceholder}
-                        className={`${getTextareaClasses(contentLanguage)} min-h-[120px]`}
+                        className={`${getTextareaClasses(desiredOutputLanguage)} min-h-[120px]`}
                     />
                 </div>
 

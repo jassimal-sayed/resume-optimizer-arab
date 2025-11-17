@@ -6,6 +6,7 @@ import type {
     OptimizationResult,
     JobRecord,
     JobSummary,
+    LanguageCode,
 } from '../types';
 import Navbar from '../components/layout/Navbar';
 import Toast from '../components/ui/Toast';
@@ -43,12 +44,12 @@ const JOB_POLL_MAX_ATTEMPTS = 20;
 const mapJobToQueueItem = (job: JobSummary | JobRecord): JobQueueItem => ({
     id: job.id,
     title: job.title,
-    status: job.status === 'complete' ? 'complete' : 'processing',
+    status: job.status,
     result: job.result,
     metadata: {
         company: job.company ?? undefined,
-        contentLanguage: job.resumeLang,
         resumeLang: job.resumeLang,
+        jobDescriptionLang: job.jdLang,
         desiredOutputLang: job.desiredOutputLang,
     },
 });
@@ -174,7 +175,9 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         customInstructions: string;
         jobTitle: string;
         companyName: string;
-        contentLanguage: 'en' | 'ar';
+        resumeLang: LanguageCode;
+        jobDescriptionLang: LanguageCode;
+        desiredOutputLang: LanguageCode;
     }) => {
         try {
             const resumePayloadText = data.resumeFile ? await data.resumeFile.text() : data.resumeText;
@@ -185,9 +188,9 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                     resumeText: resumePayloadText,
                     jobDescription: data.jobDescription,
                     customInstructions: data.customInstructions || undefined,
-                    resumeLang: data.contentLanguage,
-                    jdLang: data.contentLanguage,
-                    desiredOutputLang: data.contentLanguage,
+                    resumeLang: data.resumeLang,
+                    jdLang: data.jobDescriptionLang,
+                    desiredOutputLang: data.desiredOutputLang,
                 },
                 { accessToken: session.access_token }
             );
@@ -293,7 +296,11 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         if (selectedJob || appView === 'results' || (isDemoMode && previewState === 'results')) {
             return 'results';
         }
-        if (appView === 'queue' || jobsQueue.some(job => job.status === 'processing') || (isDemoMode && previewState === 'queue')) {
+        if (
+            appView === 'queue' ||
+            jobsQueue.some(job => job.status === 'processing' || job.status === 'queued') ||
+            (isDemoMode && previewState === 'queue')
+        ) {
             return 'processing';
         }
         return 'input';

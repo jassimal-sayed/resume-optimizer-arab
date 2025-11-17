@@ -32,6 +32,9 @@ interface TranslationStrings {
   customPlaceholder: string;
   analyzeButton: string;
   contentLanguageLabel: string;
+  resumeLanguageLabel: string;
+  jobDescriptionLanguageLabel: string;
+  desiredOutputLanguageLabel: string;
   languageEnglish: string;
   languageArabic: string;
   jobTitleLabel: string;
@@ -83,6 +86,9 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
   customPlaceholder: "e.g., 'Make the summary more concise.' or 'Emphasize my project management skills.'",
   analyzeButton: 'Tailor my CV to this job',
     contentLanguageLabel: 'Content language',
+    resumeLanguageLabel: 'Resume language',
+    jobDescriptionLanguageLabel: 'Job description language',
+    desiredOutputLanguageLabel: 'Desired output language',
     languageEnglish: 'English',
     languageArabic: 'Arabic',
     jobTitleLabel: 'Job title',
@@ -142,6 +148,9 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
   customPlaceholder: "مثلاً: \"اجعل الملخص أكثر رسمية\" أو \"أبرز خبرتي في إدارة المشاريع\".",
   analyzeButton: 'خصِّص سيرتي لهذه الوظيفة',
     contentLanguageLabel: 'لغة المحتوى',
+    resumeLanguageLabel: 'لغة السيرة الذاتية',
+    jobDescriptionLanguageLabel: 'لغة الوصف الوظيفي',
+    desiredOutputLanguageLabel: 'لغة الإخراج المطلوبة',
     languageEnglish: 'الإنجليزية',
     languageArabic: 'العربية',
     jobTitleLabel: 'المسمى الوظيفي',

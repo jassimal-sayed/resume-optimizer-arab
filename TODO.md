@@ -384,7 +384,7 @@ Status markers:
 ### Task 18 – Arabic/English Processing Metadata (Frontend Integration)
 
 - **ID:** T18
-- **Status:** [ ]
+- **Status:** [x]
 - **Priority:** Medium
 - **Goal:** Ensure each job carries enough metadata for the backend to perform proper bilingual processing (even if backend implementation is separate).
 - **Details:**
@@ -395,7 +395,7 @@ Status markers:
   - Adjust `OptimizationResult` / `JobQueueItem` types in `types.ts` if needed to include language fields.
 - **Affected files:** `components/OptimizationForm.tsx`, `pages/AppPage.tsx`, `services/jobs.ts`, `types.ts`.
 - **Dependencies:** T5, T17.
-- **Completion Notes:** (to be filled by agent)
+- **Completion Notes:** Optimization form now captures resume, job description, and desired output languages; these flow through AppPage → jobsService so every job payload and queue item carries full language metadata.
 
 ---
 

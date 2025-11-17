@@ -89,8 +89,8 @@ export interface JobQueueItem {
   result: OptimizationResult | null;
   metadata?: {
     company?: string;
-    contentLanguage?: LanguageCode;
     resumeLang?: LanguageCode;
+    jobDescriptionLang?: LanguageCode;
     desiredOutputLang?: LanguageCode;
   };
 }

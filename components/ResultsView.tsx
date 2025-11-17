@@ -95,10 +95,10 @@ const ResultsView: React.FC<{
                          {error && <p className="text-sm text-red-400">{error}</p>}
                         <Button
                             type="submit"
-                            isLoading={isRefining || job.status === 'processing'}
+                            isLoading={isRefining || job.status === 'processing' || job.status === 'queued'}
                             className="w-full"
                         >
-                           {job.status === 'processing' ? t.refiningButton : t.refineButton}
+                           {(job.status === 'processing' || job.status === 'queued') ? t.refiningButton : t.refineButton}
                         </Button>
                     </form>
                 </Card>

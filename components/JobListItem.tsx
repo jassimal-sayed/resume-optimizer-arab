@@ -17,7 +17,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, disabled, onSelect, labe
     <button
       onClick={() => !disabled && onSelect(job.id)}
       disabled={disabled}
-      className={`flex items-center w-full space-x-4 ${isRTL ? 'flex-row-reverse space-x-reverse text-right' : 'text-left'} disabled:cursor-not-allowed group`}
+      className={`flex items-center w-full space-x-4 ${isRTL ? 'flex-row-reverse space-x-reverse text-right' : 'text-left'} disabled:cursor-not-allowed group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 rounded-lg px-2 py-1 transition`}
     >
       <div className="flex-auto min-w-0">
         <p className="font-medium text-slate-200 truncate group-hover:text-primary-400 transition-colors">
@@ -27,7 +27,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, disabled, onSelect, labe
           {job.metadata?.company ? `${job.metadata.company} • ` : ''}ID: {job.id}
         </p>
       </div>
-      {job.status === 'processing' && (
+      {(job.status === 'processing' || job.status === 'queued') && (
         <div className="flex items-center space-x-2 text-yellow-400">
           <span className="text-sm font-medium">{labels.processing}</span>
           <span className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
@@ -43,4 +43,3 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, disabled, onSelect, labe
 );
 
 export default JobListItem;
-
