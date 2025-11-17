@@ -62,6 +62,8 @@ interface TranslationStrings {
   resultsGenerating: string;
   resultsGeneratingSub: string;
   instructionsError: string;
+  errorInvalidFileType: string;
+  errorFileTooLarge: string;
   analysisShow: string;
   analysisHide: string;
   refineQuickActionsTitle: string;
@@ -97,6 +99,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     companyPlaceholder: 'e.g., NoorTech, Riyadh',
     errorResumeMissing: 'Please upload a file or paste your resume text.',
     errorJobMissing: 'Please provide a job description.',
+    errorInvalidFileType: 'Upload a PDF, DOCX, or TXT file.',
+    errorFileTooLarge: 'File must be smaller than 5MB.',
     queueTitle: 'Optimization Jobs',
     queueProcessing: 'Processing',
     queueComplete: 'Complete',
@@ -159,6 +163,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     companyPlaceholder: 'مثلاً: نور تك، الرياض',
     errorResumeMissing: 'يرجى رفع ملف السيرة الذاتية أو لصقها.',
     errorJobMissing: 'يرجى إدخال الوصف الوظيفي.',
+    errorInvalidFileType: 'يجب رفع ملف بصيغة PDF أو DOCX أو TXT.',
+    errorFileTooLarge: 'يجب ألا يتجاوز حجم الملف ٥ ميجابايت.',
     queueTitle: 'طلبات التحسين',
     queueProcessing: 'جارٍ المعالجة',
     queueComplete: 'مكتمل',

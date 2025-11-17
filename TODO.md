@@ -402,7 +402,7 @@ Status markers:
 ### Task 19 – Frontend Error Handling & Edge Cases
 
 - **ID:** T19
-- **Status:** [ ]
+- **Status:** [x]
 - **Priority:** Medium
 - **Goal:** Improve robustness of user flows for long texts, file parsing failures, and network errors.
 - **Details:**
@@ -416,7 +416,7 @@ Status markers:
   - Optionally add simple client‑side limits on textarea length to prevent excessively large payloads.
 - **Affected files:** `components/OptimizationForm.tsx`, `pages/AppPage.tsx`, `components/ui/Toast.tsx`.
 - **Dependencies:** T17.
-- **Completion Notes:** (to be filled by agent)
+- **Completion Notes:** Added localized file validation errors + text limits in the form and improved AppPage service calls with optimistic queue entries, polling, and rollbacks/toasts when job start/refine calls fail.
 
 ---
 

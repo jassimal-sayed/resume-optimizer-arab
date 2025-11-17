@@ -7,6 +7,24 @@ import { useTranslations } from '../translations';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { LanguageCode } from '../types';
 
+const ACCEPTED_FILE_MIME_TYPES = new Set([
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+]);
+const ACCEPTED_FILE_SUFFIXES = ['pdf', 'docx', 'txt'];
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const MAX_TEXT_LENGTH = 12000;
+
+const hasValidFileType = (file: File) => {
+    if (file.type && ACCEPTED_FILE_MIME_TYPES.has(file.type)) {
+        return true;
+    }
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    return !!extension && ACCEPTED_FILE_SUFFIXES.includes(extension);
+};
+
 interface OptimizationFormProps {
     onStartOptimization: (data: {
         resumeFile: File | null;
@@ -35,25 +53,48 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
     const [jobDescriptionLanguage, setJobDescriptionLanguage] = useState<LanguageCode>(language);
     const [desiredOutputLanguage, setDesiredOutputLanguage] = useState<LanguageCode>(language);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setResumeFile(e.target.files[0]);
+            const file = e.target.files[0];
+            if (!hasValidFileType(file)) {
+                setFormError(t.errorInvalidFileType);
+                setResumeFile(null);
+                e.target.value = '';
+                return;
+            }
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                setFormError(t.errorFileTooLarge);
+                setResumeFile(null);
+                e.target.value = '';
+                return;
+            }
+            setResumeFile(file);
             setResumeText('');
-            setError(null);
+            setFormError(null);
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        setFormError(null);
+        if (resumeFile) {
+            if (!hasValidFileType(resumeFile)) {
+                setFormError(t.errorInvalidFileType);
+                return;
+            }
+            if (resumeFile.size > MAX_FILE_SIZE_BYTES) {
+                setFormError(t.errorFileTooLarge);
+                return;
+            }
+        }
         if (!resumeFile && !resumeText.trim()) {
-            setError(t.errorResumeMissing);
+            setFormError(t.errorResumeMissing);
             return;
         }
         if (!jobDescription.trim()) {
-            setError(t.errorJobMissing);
+            setFormError(t.errorJobMissing);
             return;
         }
 
@@ -155,10 +196,11 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                     </div>
                     <textarea
                         value={resumeText}
-                        onChange={e => { setResumeText(e.target.value); setResumeFile(null); setError(null); }}
+                        onChange={e => { setResumeText(e.target.value); setResumeFile(null); setFormError(null); }}
                         rows={8}
                         placeholder={t.resumePlaceholder}
                         className={`${getTextareaClasses(resumeLanguage)} min-h-[180px] sm:min-h-[220px]`}
+                        maxLength={MAX_TEXT_LENGTH}
                     />
                 </div>
 
@@ -168,11 +210,12 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                     <p className="text-sm text-slate-400">{t.jobSectionDescription}</p>
                     <textarea
                         value={jobDescription}
-                        onChange={e => { setJobDescription(e.target.value); setError(null); }}
+                        onChange={e => { setJobDescription(e.target.value); setFormError(null); }}
                         rows={10}
                         placeholder={t.jobDescriptionPlaceholder}
                         className={`${getTextareaClasses(jobDescriptionLanguage)} min-h-[200px] sm:min-h-[260px]`}
                         required
+                        maxLength={MAX_TEXT_LENGTH}
                     />
                 </div>
                 
@@ -182,16 +225,17 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                     <p className="text-sm text-slate-400">{t.customSectionDescription}</p>
                     <textarea
                         value={customInstructions}
-                        onChange={e => setCustomInstructions(e.target.value)}
+                        onChange={e => { setCustomInstructions(e.target.value); setFormError(null); }}
                         rows={4}
                         placeholder={t.customPlaceholder}
                         className={`${getTextareaClasses(desiredOutputLanguage)} min-h-[120px]`}
+                        maxLength={MAX_TEXT_LENGTH}
                     />
                 </div>
 
                 {/* --- Submit --- */}
                 <div>
-                     {error && <p className="mb-4 text-sm text-center text-red-400">{error}</p>}
+                     {formError && <p className="mb-4 text-sm text-center text-red-400">{formError}</p>}
                     <Button type="submit" isLoading={isLoading} className="w-full text-base py-3">
                         {t.analyzeButton}
                     </Button>

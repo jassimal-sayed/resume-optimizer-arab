@@ -54,6 +54,33 @@ const mapJobToQueueItem = (job: JobSummary | JobRecord): JobQueueItem => ({
     },
 });
 
+const cloneQueueItem = (job: JobQueueItem): JobQueueItem => ({
+    ...job,
+    result: job.result
+        ? {
+              ...job.result,
+              changeLog: [...job.result.changeLog],
+              coveredKeywords: [...job.result.coveredKeywords],
+              missingKeywords: [...job.result.missingKeywords],
+          }
+        : null,
+    metadata: job.metadata ? { ...job.metadata } : undefined,
+});
+
+const deriveJobTitle = (jobTitle: string, jobDescription: string) => {
+    if (jobTitle.trim()) {
+        return jobTitle.trim();
+    }
+    const fallback = jobDescription
+        .split('\n')
+        .map(line => line.trim())
+        .find(Boolean);
+    if (!fallback) {
+        return 'Optimization Job';
+    }
+    return fallback.length > 80 ? `${fallback.slice(0, 80)}…` : fallback;
+};
+
 // Main Application Page
 const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     const { language } = useLanguage();
@@ -179,6 +206,24 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         jobDescriptionLang: LanguageCode;
         desiredOutputLang: LanguageCode;
     }) => {
+        const optimisticId = `temp_${Date.now()}`;
+        const fallbackTitle = deriveJobTitle(data.jobTitle, data.jobDescription);
+        const optimisticJob: JobQueueItem = {
+            id: optimisticId,
+            title: fallbackTitle,
+            status: 'queued',
+            result: null,
+            metadata: {
+                company: data.companyName || undefined,
+                resumeLang: data.resumeLang,
+                jobDescriptionLang: data.jobDescriptionLang,
+                desiredOutputLang: data.desiredOutputLang,
+            },
+        };
+        setJobsQueue(prev => [optimisticJob, ...prev]);
+        setSelectedJobId(null);
+        setAppView('queue');
+
         try {
             const resumePayloadText = data.resumeFile ? await data.resumeFile.text() : data.resumeText;
             const job = await jobsService.createJob(
@@ -194,17 +239,19 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                 },
                 { accessToken: session.access_token }
             );
+            setJobsQueue(prev => prev.filter(queueJob => queueJob.id !== optimisticId));
             syncJobToQueue(job, { prepend: true });
-            setSelectedJobId(null);
-            setAppView('queue');
             pollJobStatus(job.id, 'Optimization complete!');
         } catch (error) {
             console.error(error);
+            setJobsQueue(prev => prev.filter(queueJob => queueJob.id !== optimisticId));
             showToast('An error occurred during optimization.', 'error');
         }
     };
 
     const handleRefine = async (jobId: string, instructions: string) => {
+        const previousJob = jobsQueue.find(job => job.id === jobId);
+        const previousSnapshot = previousJob ? cloneQueueItem(previousJob) : null;
         setJobsQueue(prev => prev.map(job =>
             job.id === jobId ? { ...job, status: 'processing' } : job
         ));
@@ -219,6 +266,13 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
             pollJobStatus(jobId, 'Refinement complete!');
         } catch (error) {
             console.error(error);
+            if (previousSnapshot) {
+                setJobsQueue(prev => prev.map(job => (job.id === jobId ? previousSnapshot : job)));
+            } else {
+                setJobsQueue(prev => prev.map(job =>
+                    job.id === jobId ? { ...job, status: 'complete' } : job
+                ));
+            }
             showToast('An error occurred during refinement.', 'error');
         }
     };
