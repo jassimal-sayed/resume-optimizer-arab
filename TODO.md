@@ -342,7 +342,7 @@ Status markers:
 ### Task 16 – Backend Job Model & API Contracts (Design Only in Frontend Repo)
 
 - **ID:** T16
-- **Status:** [ ]
+- **Status:** [x]
 - **Priority:** High
 - **Goal:** Define the job model and API contracts that the frontend will rely on, even if backend implementation is in a different repo.
 - **Details:**
@@ -357,7 +357,7 @@ Status markers:
   - Include language metadata requirements (for Arabic/English processing).
 - **Affected files:** new `API_DESIGN.md`, `types.ts` (for future interfaces).
 - **Dependencies:** T5 (language fields), T1.
-- **Completion Notes:** (to be filled by agent)
+- **Completion Notes:** Added `API_DESIGN.md` with job schema/endpoints and expanded `types.ts` with Job/Result payloads, statuses, and language metadata.
 
 ---
 
