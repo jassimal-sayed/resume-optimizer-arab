@@ -1,5 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import type { Session, ToastMessage, JobQueueItem, OptimizationResult } from '../types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type {
+    Session,
+    ToastMessage,
+    JobQueueItem,
+    OptimizationResult,
+    JobRecord,
+    JobSummary,
+} from '../types';
 import Navbar from '../components/layout/Navbar';
 import Toast from '../components/ui/Toast';
 import OptimizationForm from '../components/OptimizationForm';
@@ -8,6 +15,7 @@ import ResultsView from '../components/ResultsView';
 import StepIndicator from '../components/StepIndicator';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { StepId } from '../translations';
+import { jobsService } from '../services/jobs';
 
 // --- MOCK DATA FOR DEMO ---
 const mockCompleteJobResult: OptimizationResult = {
@@ -29,6 +37,22 @@ const mockJobsInQueue: JobQueueItem[] = [
     { id: 'job_2', title: 'UI/UX Engineer @ CreativeMinds...', status: 'processing', result: null },
 ];
 
+const JOB_POLL_INTERVAL = 2500;
+const JOB_POLL_MAX_ATTEMPTS = 20;
+
+const mapJobToQueueItem = (job: JobSummary | JobRecord): JobQueueItem => ({
+    id: job.id,
+    title: job.title,
+    status: job.status === 'complete' ? 'complete' : 'processing',
+    result: job.result,
+    metadata: {
+        company: job.company ?? undefined,
+        contentLanguage: job.resumeLang,
+        resumeLang: job.resumeLang,
+        desiredOutputLang: job.desiredOutputLang,
+    },
+});
+
 // Main Application Page
 const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     const { language } = useLanguage();
@@ -41,6 +65,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     
     // State for developer preview (demo mode only)
     const [previewState, setPreviewState] = useState<'dashboard' | 'queue' | 'results'>('dashboard');
+    const pollTimeouts = useRef<Record<string, number>>({});
 
 
     const showToast = (message: string, type: 'success' | 'error') => {
@@ -48,10 +73,99 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     };
 
     useEffect(() => {
+        return () => {
+            Object.values(pollTimeouts.current).forEach(timeoutId => {
+                clearTimeout(timeoutId);
+            });
+        };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const bootstrapJobs = async () => {
+            try {
+                const jobs = await jobsService.listJobs({ accessToken: session.access_token });
+                if (!isMounted) {
+                    return;
+                }
+                setJobsQueue(jobs.map(mapJobToQueueItem));
+            } catch (error) {
+                console.error(error);
+                showToast('Unable to load recent jobs.', 'error');
+            }
+        };
+        bootstrapJobs();
+        return () => {
+            isMounted = false;
+        };
+    }, [session.access_token]);
+
+    useEffect(() => {
         if (appView === 'queue' && jobsQueue.length > 0 && jobsQueue.every(job => job.status === 'complete')) {
             setAppView('dashboard');
         }
     }, [appView, jobsQueue]);
+
+    const syncJobToQueue = (jobData: JobSummary | JobRecord, options: { prepend?: boolean } = {}) => {
+        const item = mapJobToQueueItem(jobData);
+        setJobsQueue(prev => {
+            const existingIndex = prev.findIndex(job => job.id === item.id);
+            if (existingIndex === -1) {
+                return options.prepend ? [item, ...prev] : [...prev, item];
+            }
+            return prev.map(job => (job.id === item.id ? { ...job, ...item } : job));
+        });
+    };
+
+    const pollJobStatus = (jobId: string, successMessage?: string, attempt = 0) => {
+        const runPoll = async () => {
+            try {
+                const job = await jobsService.getJob(jobId, { accessToken: session.access_token });
+                syncJobToQueue(job);
+                if (job.status === 'complete') {
+                    if (successMessage) {
+                        showToast(successMessage, 'success');
+                    }
+                    return false;
+                }
+                if (job.status === 'failed') {
+                    showToast('Job failed during processing.', 'error');
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error(error);
+                showToast('Unable to refresh job status.', 'error');
+                return false;
+            }
+        };
+
+        runPoll().then(shouldContinue => {
+            if (shouldContinue && attempt < JOB_POLL_MAX_ATTEMPTS) {
+                const timeoutId = setTimeout(() => {
+                    pollJobStatus(jobId, successMessage, attempt + 1);
+                }, JOB_POLL_INTERVAL);
+                pollTimeouts.current[jobId] = timeoutId;
+            } else if (pollTimeouts.current[jobId]) {
+                clearTimeout(pollTimeouts.current[jobId]);
+                delete pollTimeouts.current[jobId];
+            }
+        });
+    };
+
+    const handleJobSelect = (jobId: string) => {
+        setSelectedJobId(jobId);
+        setAppView('results');
+        jobsService
+            .getJob(jobId, { accessToken: session.access_token })
+            .then(job => {
+                syncJobToQueue(job);
+            })
+            .catch(error => {
+                console.error(error);
+                showToast('Unable to load job details.', 'error');
+            });
+    };
 
     const handleStartOptimization = async (data: {
         resumeFile: File | null;
@@ -62,34 +176,27 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         companyName: string;
         contentLanguage: 'en' | 'ar';
     }) => {
-        const jobId = `job_${Date.now()}`;
-        const jobTitle = data.jobTitle || data.jobDescription.split('\n')[0].substring(0, 50) + '...';
-
-        const newJob: JobQueueItem = {
-            id: jobId,
-            title: jobTitle,
-            status: 'processing',
-            result: null,
-            metadata: {
-                company: data.companyName,
-                contentLanguage: data.contentLanguage,
-            },
-        };
-        setJobsQueue(prev => [newJob, ...prev]);
-        setSelectedJobId(null);
-        setAppView('queue');
-
-        // --- MOCK BACKEND PROCESSING ---
         try {
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            setJobsQueue(prev => prev.map(job =>
-                job.id === jobId ? { ...job, status: 'complete', result: mockCompleteJobResult } : job
-            ));
-            showToast('Optimization complete!', 'success');
+            const resumePayloadText = data.resumeFile ? await data.resumeFile.text() : data.resumeText;
+            const job = await jobsService.createJob(
+                {
+                    title: data.jobTitle,
+                    company: data.companyName || undefined,
+                    resumeText: resumePayloadText,
+                    jobDescription: data.jobDescription,
+                    customInstructions: data.customInstructions || undefined,
+                    resumeLang: data.contentLanguage,
+                    jdLang: data.contentLanguage,
+                    desiredOutputLang: data.contentLanguage,
+                },
+                { accessToken: session.access_token }
+            );
+            syncJobToQueue(job, { prepend: true });
+            setSelectedJobId(null);
+            setAppView('queue');
+            pollJobStatus(job.id, 'Optimization complete!');
         } catch (error) {
             console.error(error);
-            setJobsQueue(prev => prev.filter(job => job.id !== jobId));
             showToast('An error occurred during optimization.', 'error');
         }
     };
@@ -98,32 +205,20 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         setJobsQueue(prev => prev.map(job =>
             job.id === jobId ? { ...job, status: 'processing' } : job
         ));
-        
-        // --- MOCK BACKEND REFINEMENT ---
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            const existingJob = jobsQueue.find(j => j.id === jobId);
-            if (!existingJob || !existingJob.result) throw new Error("Job not found");
-
-            const refinedResult: OptimizationResult = {
-                ...existingJob.result,
-                score: Math.min(existingJob.result.score + 5, 100), // Increase score slightly
-                previewMarkdown: existingJob.result.previewMarkdown + `\n\n## Refinement Notes\n\nBased on the instruction: *"${instructions}"*, further adjustments were made to emphasize project management skills.`,
-                changeLog: [...existingJob.result.changeLog, `Refined based on user feedback: "${instructions}"`]
-            };
-
-            setJobsQueue(prev => prev.map(job =>
-                job.id === jobId ? { ...job, status: 'complete', result: refinedResult } : job
-            ));
-            showToast('Resume refined!', 'success');
+            const updated = await jobsService.refineJob(
+                jobId,
+                { instructions },
+                { accessToken: session.access_token }
+            );
+            syncJobToQueue(updated);
+            pollJobStatus(jobId, 'Refinement complete!');
         } catch (error) {
-             console.error(error);
-             showToast('An error occurred during refinement.', 'error');
-             setJobsQueue(prev => prev.map(job =>
-                job.id === jobId ? { ...job, status: 'complete' } : job // Revert status
-            ));
+            console.error(error);
+            showToast('An error occurred during refinement.', 'error');
         }
-    }
+    };
     
     const DevPreviewControls = () => {
         if (!isDemoMode) return null;
@@ -169,7 +264,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                             We’re tailoring your resume to match the job description. You can follow the status below and open the result once it’s ready.
                         </p>
                     </div>
-                    <JobsQueue jobs={jobsQueue} onSelectJob={(id) => { setSelectedJobId(id); setAppView('results'); }} />
+                    <JobsQueue jobs={jobsQueue} onSelectJob={handleJobSelect} />
                 </div>
             );
         }
@@ -185,7 +280,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                             <p className="text-sm text-slate-300">Recent optimizations</p>
                             <p className="text-xs text-slate-400">Completed jobs appear here so you can quickly reopen results.</p>
                         </div>
-                        <JobsQueue jobs={jobsQueue} onSelectJob={(id) => { setSelectedJobId(id); setAppView('results'); }} />
+                        <JobsQueue jobs={jobsQueue} onSelectJob={handleJobSelect} />
                     </div>
                 </div>
             </div>

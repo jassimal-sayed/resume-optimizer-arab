@@ -33,3 +33,4 @@ export const SUPABASE_ANON_KEY: string = withFallback(
 );
 
 export const SUPABASE_CONFIGURED = Boolean(rawSupabaseUrl && rawSupabaseAnonKey);
+export const API_CONFIGURED = Boolean(rawApiBaseUrl);

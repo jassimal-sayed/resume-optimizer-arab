@@ -364,7 +364,7 @@ Status markers:
 ### Task 17 – Frontend Integration with Job API (Stubbed)
 
 - **ID:** T17
-- **Status:** [ ]
+- **Status:** [x]
 - **Priority:** High
 - **Goal:** Refactor `pages/AppPage.tsx` to use async API calls for creating and retrieving jobs, while still allowing mock/stubbed implementations during early development.
 - **Details:**
@@ -377,7 +377,7 @@ Status markers:
   - Preserve the user experience: job appears in queue quickly and updates status when result is ready.
 - **Affected files:** `pages/AppPage.tsx`, new `services/jobs.ts`, possibly `types.ts`.
 - **Dependencies:** T16, T8.
-- **Completion Notes:** (to be filled by agent)
+- **Completion Notes:** Added `services/jobs.ts` with REST + mock fallback, refactored `AppPage.tsx` to load/list jobs via the service, start/refine through API calls, and poll for status updates while keeping queue UX intact.
 
 ---
 
