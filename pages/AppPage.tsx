@@ -1,23 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import JobsQueue from '../components/JobsQueue';
+import Navbar from '../components/layout/Navbar';
+import OptimizationForm from '../components/OptimizationForm';
+import ResultsView from '../components/ResultsView';
+import StepIndicator from '../components/StepIndicator';
+import { Button } from '../components/ui/Button';
+import Toast from '../components/ui/Toast';
+import { useLanguage } from '../contexts/LanguageContext';
+import { jobsService } from '../services/jobs';
+import { uploadsService } from '../services/uploads';
+import type { StepId } from '../translations';
+import { useTranslations } from '../translations';
 import type {
-    Session,
-    ToastMessage,
     JobQueueItem,
-    OptimizationResult,
     JobRecord,
     JobSummary,
     LanguageCode,
+    OptimizationResult,
+    Session,
+    ToastMessage,
 } from '../types';
-import Navbar from '../components/layout/Navbar';
-import Toast from '../components/ui/Toast';
-import OptimizationForm from '../components/OptimizationForm';
-import JobsQueue from '../components/JobsQueue';
-import ResultsView from '../components/ResultsView';
-import StepIndicator from '../components/StepIndicator';
-import { useLanguage } from '../contexts/LanguageContext';
-import type { StepId } from '../translations';
-import { useTranslations } from '../translations';
-import { jobsService } from '../services/jobs';
 
 // --- MOCK DATA FOR DEMO ---
 const mockCompleteJobResult: OptimizationResult = {
@@ -145,8 +147,17 @@ const mockJobsInQueue: JobQueueItem[] = [
     },
 ];
 
+const RESUME_EXTRACTION_ERROR = 'resume_extraction_failed';
+
+const getFileExtension = (file: File) => file.name.split('.').pop()?.toLowerCase();
+
+const isPlainTextFile = (file: File) =>
+    file.type === 'text/plain' || getFileExtension(file) === 'txt';
+
 const JOB_POLL_INTERVAL = 2500;
 const JOB_POLL_MAX_ATTEMPTS = 20;
+const RECENT_ANALYSES_LIMIT = 10;
+const HISTORY_PAGE_SIZE = 10;
 
 const mapJobToQueueItem = (job: JobSummary | JobRecord): JobQueueItem => ({
     id: job.id,
@@ -196,8 +207,27 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     const [jobsQueue, setJobsQueue] = useState<JobQueueItem[]>([]);
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
     const [toast, setToast] = useState<ToastMessage | null>(null);
-    const [appView, setAppView] = useState<'dashboard' | 'queue' | 'results'>('dashboard');
+    const [appView, setAppView] = useState<'dashboard' | 'queue' | 'results' | 'history'>('dashboard');
+    const [historyPage, setHistoryPage] = useState(1);
     const isDemoMode = useMemo(() => import.meta.env.VITE_DEMO_MODE === 'true', []);
+    const completedJobs = useMemo(
+        () => jobsQueue.filter(job => job.status === 'complete'),
+        [jobsQueue]
+    );
+    const recentCompletedJobs = useMemo(
+        () => completedJobs.slice(0, RECENT_ANALYSES_LIMIT),
+        [completedJobs]
+    );
+    const totalHistoryPages = Math.max(1, Math.ceil(completedJobs.length / HISTORY_PAGE_SIZE));
+    const clampedHistoryPage = Math.min(historyPage, totalHistoryPages);
+    const historySliceStart = (clampedHistoryPage - 1) * HISTORY_PAGE_SIZE;
+    const historyJobs = completedJobs.slice(historySliceStart, historySliceStart + HISTORY_PAGE_SIZE);
+
+    useEffect(() => {
+        if (historyPage !== clampedHistoryPage) {
+            setHistoryPage(clampedHistoryPage);
+        }
+    }, [clampedHistoryPage, historyPage]);
 
     // State for developer preview (demo mode only)
     const [previewState, setPreviewState] = useState<'dashboard' | 'queue' | 'results'>('dashboard');
@@ -304,6 +334,27 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
             });
     };
 
+    const handleViewAllAnalyses = () => {
+        setHistoryPage(1);
+        setAppView('history');
+    };
+
+    const resolveResumeText = async (file: File): Promise<string> => {
+        if (isPlainTextFile(file)) {
+            return file.text();
+        }
+
+        try {
+            const extracted = await uploadsService.extractResumeText(file, {
+                accessToken: session.access_token,
+            });
+            return extracted.text?.trim() ?? '';
+        } catch (error) {
+            console.error(error);
+            throw new Error(RESUME_EXTRACTION_ERROR);
+        }
+    };
+
     const handleStartOptimization = async (data: {
         resumeFile: File | null;
         resumeText: string;
@@ -334,7 +385,12 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         setAppView('queue');
 
         try {
-            const resumePayloadText = data.resumeFile ? await data.resumeFile.text() : data.resumeText;
+            const resumePayloadText = data.resumeFile
+                ? await resolveResumeText(data.resumeFile)
+                : data.resumeText;
+            if (!resumePayloadText.trim()) {
+                throw new Error(RESUME_EXTRACTION_ERROR);
+            }
             const job = await jobsService.createJob(
                 {
                     title: data.jobTitle,
@@ -354,7 +410,11 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         } catch (error) {
             console.error(error);
             setJobsQueue(prev => prev.filter(queueJob => queueJob.id !== optimisticId));
-            showToast('An error occurred during optimization.', 'error');
+            const errorMessage =
+                error instanceof Error && error.message === RESUME_EXTRACTION_ERROR
+                    ? 'Unable to extract resume text from the uploaded file.'
+                    : 'An error occurred during optimization.';
+            showToast(errorMessage, 'error');
         }
     };
 
@@ -386,6 +446,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         }
     };
 
+    /*
     const DevPreviewControls = () => (
         <div className="p-4 mb-8 border border-dashed rounded-lg bg-yellow-900/20 border-yellow-500/30">
             <h3 className="font-semibold text-yellow-300">Developer Preview Controls</h3>
@@ -414,6 +475,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
             </div>
         </div>
     );
+    */
 
     const renderContent = () => {
         if (previewEnabled && previewState !== 'dashboard') {
@@ -449,6 +511,56 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
             );
         }
 
+        if (appView === 'history') {
+            const totalHistoryCount = completedJobs.length;
+            const showPagination = totalHistoryCount > HISTORY_PAGE_SIZE;
+            return (
+                <div className="flex flex-col max-w-5xl mx-auto space-y-6">
+                    <div className={`flex flex-wrap items-start justify-between gap-4 ${isRTL ? 'text-right' : 'text-left'}`}>
+                        <div>
+                            <h2 className="text-2xl font-semibold text-slate-100">{t.analysisHistoryTitle}</h2>
+                            <p className="text-sm text-slate-400">{t.analysisHistorySubtitle}</p>
+                        </div>
+                        <Button variant="secondary" onClick={() => setAppView('dashboard')}>
+                            {t.backToDashboard}
+                        </Button>
+                    </div>
+                    {totalHistoryCount === 0 ? (
+                        <div className="p-6 rounded-2xl border border-gray-700 bg-gray-800 text-sm text-slate-300">
+                            {t.noAnalysesMessage}
+                        </div>
+                    ) : (
+                        <JobsQueue jobs={historyJobs} onSelectJob={handleJobSelect} />
+                    )}
+                    {showPagination && (
+                        <div className={`flex flex-wrap items-center justify-between gap-4 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            <p className="text-xs text-slate-400">
+                                {t.paginationLabel
+                                    .replace('{current}', String(clampedHistoryPage))
+                                    .replace('{total}', String(totalHistoryPages))}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => setHistoryPage(prev => Math.max(1, prev - 1))}
+                                    disabled={clampedHistoryPage <= 1}
+                                >
+                                    {t.paginationPrevious}
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => setHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
+                                    disabled={clampedHistoryPage >= totalHistoryPages}
+                                >
+                                    {t.paginationNext}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         return (
             <div className="grid gap-8 max-w-5xl mx-auto lg:grid-cols-[2fr,1fr]">
                 <div className="order-2 lg:order-1">
@@ -457,10 +569,19 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                 <div className="order-1 lg:order-2">
                     <div className="sticky top-8">
                         <div className="mb-4 p-4 bg-gray-800 border border-gray-700 rounded-xl">
-                            <p className="text-sm text-slate-300">Recent analyses</p>
-                            <p className="text-xs text-slate-400">Completed runs appear here so you can quickly reopen results.</p>
+                            <div className={`flex items-center justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                <div>
+                                    <p className="text-sm text-slate-300">{t.recentAnalysesTitle}</p>
+                                    <p className="text-xs text-slate-400">{t.recentAnalysesSubtitle}</p>
+                                </div>
+                                {completedJobs.length > RECENT_ANALYSES_LIMIT && (
+                                    <Button variant="secondary" onClick={handleViewAllAnalyses}>
+                                        {t.viewAllAnalyses}
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                        <JobsQueue jobs={jobsQueue} onSelectJob={handleJobSelect} />
+                        <JobsQueue jobs={recentCompletedJobs} onSelectJob={handleJobSelect} />
                     </div>
                 </div>
             </div>
@@ -538,7 +659,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                         </div>
                     </section>
                 )}
-                <DevPreviewControls />
+                {/* <DevPreviewControls /> */}
                 {renderContent()}
             </main>
         </div>

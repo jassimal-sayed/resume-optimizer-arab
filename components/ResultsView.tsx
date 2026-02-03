@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import type { JobQueueItem } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTranslations } from '../translations';
+import type { JobQueueItem, JobRecord } from '../types';
+import ExportButton from './ExportButton';
+import ExtractedProfile from './ExtractedProfile';
+import FeedbackPanel from './FeedbackPanel';
+import ReliabilityDisplay from './ReliabilityDisplay';
 import ResultsSummaryPanel from './ResultsSummaryPanel';
 import ResumePreviewPanel from './ResumePreviewPanel';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 
 const ResultsView: React.FC<{
     job: JobQueueItem;
@@ -21,6 +25,7 @@ const ResultsView: React.FC<{
     const [isRefining, setIsRefining] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showAnalysis, setShowAnalysis] = useState(false);
+    const [activeTab, setActiveTab] = useState<'preview' | 'profile' | 'feedback'>('preview');
     const gridColumns = showRefineCard ? 'md:grid-cols-5' : 'md:grid-cols-1';
     const resultsColSpan = showRefineCard ? 'md:col-span-3' : 'md:col-span-1';
 
@@ -49,13 +54,41 @@ const ResultsView: React.FC<{
         setRefineInstructions('');
     };
 
+    // Create a mock JobRecord for ExportButton compatibility
+    const jobRecord: JobRecord | null = job ? {
+        id: job.id,
+        title: job.title,
+        status: job.status,
+        result: job.result,
+        company: job.metadata?.company || null,
+        resumeLang: job.metadata?.resumeLang || 'en',
+        jdLang: job.metadata?.jobDescriptionLang || 'en',
+        desiredOutputLang: job.metadata?.desiredOutputLang || 'en',
+    } as unknown as JobRecord : null;
+
+    const TabButton: React.FC<{ tab: typeof activeTab; label: string }> = ({ tab, label }) => (
+        <button
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === tab
+                    ? 'bg-white text-slate-900 border-b-2 border-primary-500'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                }`}
+        >
+            {label}
+        </button>
+    );
+
     return (
         <div className={`flex flex-col space-y-4 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-            <div>
+            <div className="flex items-center justify-between">
                 <Button onClick={onBack} variant="secondary">
                     {t.backToDashboard}
                 </Button>
+                {job.result && <ExportButton job={jobRecord} result={job.result} />}
             </div>
+
+            {/* Reliability Metrics */}
+            {job.result && <ReliabilityDisplay result={job.result} />}
 
             <div className={`grid grid-cols-1 gap-8 ${gridColumns} md:items-start`}>
                 {/* Left Panel - Refine (commented out for now; set showRefineCard=true to restore) */}
@@ -129,25 +162,46 @@ const ResultsView: React.FC<{
                                     {showAnalysis ? t.analysisHide : t.analysisShow}
                                 </button>
                             </div>
-                            {showAnalysis && (
-                                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
-                                    <ResultsSummaryPanel
-                                        result={job.result}
-                                        isRTL={isRTL}
-                                        t={t}
-                                        desiredOutputLang={job.metadata?.desiredOutputLang}
-                                        resumeLang={job.metadata?.resumeLang}
-                                        jobDescriptionLang={job.metadata?.jobDescriptionLang}
-                                    />
-                                </div>
+
+                            {/* Tab Navigation */}
+                            <div className="flex gap-2 border-b border-slate-200">
+                                <TabButton tab="preview" label={t.tabPreviewLabel || 'Optimized Resume'} />
+                                <TabButton tab="profile" label={t.tabProfileLabel || 'Extracted Profile'} />
+                                <TabButton tab="feedback" label={t.tabFeedbackLabel || 'Alignment Feedback'} />
+                            </div>
+
+                            {/* Tab Content */}
+                            {activeTab === 'preview' && (
+                                <>
+                                    {showAnalysis && (
+                                        <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                                            <ResultsSummaryPanel
+                                                result={job.result}
+                                                isRTL={isRTL}
+                                                t={t}
+                                                desiredOutputLang={job.metadata?.desiredOutputLang}
+                                                resumeLang={job.metadata?.resumeLang}
+                                                jobDescriptionLang={job.metadata?.jobDescriptionLang}
+                                            />
+                                        </div>
+                                    )}
+                                    <ResumePreviewPanel result={job.result} isRTL={isRTL} t={t} />
+                                </>
                             )}
-                            <ResumePreviewPanel result={job.result} isRTL={isRTL} t={t} />
+
+                            {activeTab === 'profile' && (
+                                <ExtractedProfile result={job.result} />
+                            )}
+
+                            {activeTab === 'feedback' && (
+                                <FeedbackPanel result={job.result} />
+                            )}
                         </div>
                     ) : (
-                         <div className="py-24 text-center text-slate-500">
-                             <p className="font-semibold">{t.resultsGenerating}</p>
-                             <p className="text-sm">{t.resultsGeneratingSub}</p>
-                         </div>
+                        <div className="py-24 text-center text-slate-500">
+                            <p className="font-semibold">{t.resultsGenerating}</p>
+                            <p className="text-sm">{t.resultsGeneratingSub}</p>
+                        </div>
                     )}
                 </div>
             </div>

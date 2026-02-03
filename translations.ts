@@ -65,6 +65,15 @@ interface TranslationStrings {
   instructionsError: string;
   errorInvalidFileType: string;
   errorFileTooLarge: string;
+  recentAnalysesTitle: string;
+  recentAnalysesSubtitle: string;
+  viewAllAnalyses: string;
+  analysisHistoryTitle: string;
+  analysisHistorySubtitle: string;
+  noAnalysesMessage: string;
+  paginationLabel: string;
+  paginationPrevious: string;
+  paginationNext: string;
   analysisShow: string;
   analysisHide: string;
   structuredExtractionTitle: string;
@@ -106,6 +115,20 @@ interface TranslationStrings {
   refineQuickActionsDescription: string;
   refineQuickActions: RefineQuickAction[];
   steps: Record<StepId, StepTranslation>;
+  // Chapter 5 additions
+  tabPreviewLabel: string;
+  tabProfileLabel: string;
+  tabFeedbackLabel: string;
+  extractedProfileTitle: string;
+  contactLabel: string;
+  alignmentFeedbackTitle: string;
+  matchedSkillsLabel: string;
+  missingSkillsLabel: string;
+  weakAreasLabel: string;
+  exportCSVLabel: string;
+  exportTXTLabel: string;
+  validOutputLabel: string;
+  invalidRateLabel: string;
 }
 
 const translations: Record<SupportedLanguage, TranslationStrings> = {
@@ -138,6 +161,15 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     errorJobMissing: 'Please provide a job description.',
     errorInvalidFileType: 'Upload a PDF, DOCX, or TXT file.',
     errorFileTooLarge: 'File must be smaller than 5MB.',
+    recentAnalysesTitle: 'Recent analyses',
+    recentAnalysesSubtitle: 'Completed runs appear here so you can quickly reopen results.',
+    viewAllAnalyses: 'View all',
+    analysisHistoryTitle: 'All analyses',
+    analysisHistorySubtitle: 'Browse your completed analysis history.',
+    noAnalysesMessage: 'No completed analyses yet.',
+    paginationLabel: 'Page {current} of {total}',
+    paginationPrevious: 'Previous',
+    paginationNext: 'Next',
     queueTitle: 'Analysis Runs',
     queueProcessing: 'Processing',
     queueComplete: 'Complete',
@@ -212,6 +244,20 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       results: { label: 'Step 3', title: 'Analysis Results' },
       refine: { label: 'Step 4', title: 'Refine with AI' },
     },
+    // Chapter 5 additions
+    tabPreviewLabel: 'Optimized Resume',
+    tabProfileLabel: 'Extracted Profile',
+    tabFeedbackLabel: 'Alignment Feedback',
+    extractedProfileTitle: 'Extracted Profile',
+    contactLabel: 'Contact',
+    alignmentFeedbackTitle: 'Alignment Feedback',
+    matchedSkillsLabel: 'Matched Requirements',
+    missingSkillsLabel: 'Missing Requirements',
+    weakAreasLabel: 'Needs Improvement',
+    exportCSVLabel: 'Export CSV',
+    exportTXTLabel: 'Export TXT',
+    validOutputLabel: 'Valid Output',
+    invalidRateLabel: 'Invalid Rate',
   },
   ar: {
     navTitle: 'محلل السيرة الذاتية بالذكاء الاصطناعي',
@@ -242,6 +288,15 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     errorJobMissing: 'يرجى إدخال الوصف الوظيفي.',
     errorInvalidFileType: 'يجب رفع ملف بصيغة PDF أو DOCX أو TXT.',
     errorFileTooLarge: 'يجب ألا يتجاوز حجم الملف ٥ ميجابايت.',
+    recentAnalysesTitle: 'أحدث التحليلات',
+    recentAnalysesSubtitle: 'تظهر هنا النتائج المكتملة لإعادة فتحها بسرعة.',
+    viewAllAnalyses: 'عرض الكل',
+    analysisHistoryTitle: 'كل التحليلات',
+    analysisHistorySubtitle: 'استعرض سجل التحليلات المكتملة.',
+    noAnalysesMessage: 'لا توجد تحليلات مكتملة حتى الآن.',
+    paginationLabel: 'الصفحة {current} من {total}',
+    paginationPrevious: 'السابق',
+    paginationNext: 'التالي',
     queueTitle: 'طلبات التحليل',
     queueProcessing: 'جارٍ المعالجة',
     queueComplete: 'مكتمل',
@@ -316,6 +371,20 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       results: { label: 'الخطوة ٣', title: 'نتائج التحليل' },
       refine: { label: 'الخطوة ٤', title: 'تحسين باستخدام الذكاء الاصطناعي' },
     },
+    // Chapter 5 additions
+    tabPreviewLabel: 'السيرة المُحسّنة',
+    tabProfileLabel: 'الملف الشخصي المستخرج',
+    tabFeedbackLabel: 'تحليل التوافق',
+    extractedProfileTitle: 'الملف الشخصي المستخرج',
+    contactLabel: 'معلومات الاتصال',
+    alignmentFeedbackTitle: 'تحليل التوافق',
+    matchedSkillsLabel: 'المتطلبات المتوفرة',
+    missingSkillsLabel: 'المتطلبات الناقصة',
+    weakAreasLabel: 'تحتاج تحسين',
+    exportCSVLabel: 'تصدير CSV',
+    exportTXTLabel: 'تصدير TXT',
+    validOutputLabel: 'مخرج صالح',
+    invalidRateLabel: 'نسبة الأخطاء',
   },
 };
 
