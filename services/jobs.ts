@@ -219,6 +219,9 @@ const normalizeTitle = (payload: CreateJobPayload) => {
   if (payload.title?.trim()) {
     return payload.title.trim();
   }
+  if (!payload.jobDescription?.trim()) {
+    return 'General Resume Review';
+  }
   const fallback = payload.jobDescription
     .split('\n')
     .map(line => line.trim())
@@ -275,7 +278,7 @@ const createJobMock = async (payload: CreateJobPayload): Promise<JobSummary> => 
     title: normalizeTitle(payload),
     company: payload.company ?? null,
     resumeText: payload.resumeText,
-    jobDescription: payload.jobDescription,
+    jobDescription: payload.jobDescription ?? '',
     customInstructions: payload.customInstructions ?? null,
     resumeLang: payload.resumeLang,
     jdLang: payload.jdLang,

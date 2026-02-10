@@ -189,6 +189,9 @@ const deriveJobTitle = (jobTitle: string, jobDescription: string) => {
     if (jobTitle.trim()) {
         return jobTitle.trim();
     }
+    if (!jobDescription.trim()) {
+        return 'General Resume Review';
+    }
     const fallback = jobDescription
         .split('\n')
         .map(line => line.trim())
@@ -396,7 +399,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                     title: data.jobTitle,
                     company: data.companyName || undefined,
                     resumeText: resumePayloadText,
-                    jobDescription: data.jobDescription,
+                    jobDescription: data.jobDescription || undefined,
                     customInstructions: data.customInstructions || undefined,
                     resumeLang: data.resumeLang,
                     jdLang: data.jobDescriptionLang,

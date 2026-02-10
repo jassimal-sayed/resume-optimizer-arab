@@ -93,10 +93,7 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
             setFormError(t.errorResumeMissing);
             return;
         }
-        if (!jobDescription.trim()) {
-            setFormError(t.errorJobMissing);
-            return;
-        }
+
 
         setIsLoading(true);
         await onStartOptimization({
@@ -208,17 +205,22 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                     />
                 </div>
 
-                {/* --- 2. Job Description --- */}
+                {/* --- 2. Job Description (Optional) --- */}
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold text-slate-100">{t.jobSectionTitle}</h2>
                     <p className="text-sm text-slate-400">{t.jobSectionDescription}</p>
+                    {!jobDescription.trim() && (
+                        <div className="rounded-lg bg-primary-500/10 border border-primary-500/20 p-3 text-xs text-primary-300">
+                            <p className="font-semibold">{t.genericModeTitle}</p>
+                            <p className="mt-1">{t.genericModeDescription}</p>
+                        </div>
+                    )}
                     <textarea
                         value={jobDescription}
                         onChange={e => { setJobDescription(e.target.value); setFormError(null); }}
                         rows={10}
                         placeholder={t.jobDescriptionPlaceholder}
                         className={`${getTextareaClasses(jobDescriptionLanguage)} min-h-[200px] sm:min-h-[260px]`}
-                        required
                         maxLength={MAX_TEXT_LENGTH}
                     />
                 </div>
@@ -241,7 +243,7 @@ const OptimizationForm: React.FC<OptimizationFormProps> = ({ onStartOptimization
                 <div>
                      {formError && <p className="mb-4 text-sm text-center text-red-400">{formError}</p>}
                     <Button type="submit" isLoading={isLoading} className="w-full text-base py-3">
-                        {t.analyzeButton}
+                        {jobDescription.trim() ? t.analyzeButton : t.analyzeGenericButton}
                     </Button>
                 </div>
             </form>

@@ -16,8 +16,7 @@ const ResultsView: React.FC<{
     onBack: () => void;
     onRefine: (jobId: string, instructions: string) => Promise<void>;
 }> = ({ job, onBack, onRefine }) => {
-    // Toggle this flag to re-enable the Refine with AI card; kept for easy restoration.
-    const showRefineCard = false;
+    const showRefineCard = true;
     const { language } = useLanguage();
     const t = useTranslations();
     const isRTL = language === 'ar';

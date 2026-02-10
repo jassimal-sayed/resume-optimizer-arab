@@ -44,6 +44,10 @@ interface TranslationStrings {
   companyPlaceholder: string;
   errorResumeMissing: string;
   errorJobMissing: string;
+  analyzeGenericButton: string;
+  genericModeTitle: string;
+  genericModeDescription: string;
+  qualityScoreLabel: string;
   queueTitle: string;
   queueProcessing: string;
   queueComplete: string;
@@ -140,8 +144,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     uploadLabel: 'Click to upload a file',
     orDivider: 'OR',
     resumePlaceholder: 'Paste your resume text here...',
-    jobSectionTitle: '2. Job Description',
-    jobSectionDescription: "Paste the job description you're applying for.",
+    jobSectionTitle: '2. Job Description (Optional)',
+    jobSectionDescription: "Paste the job description you're applying for, or leave blank for a general resume review.",
     jobDescriptionPlaceholder: 'Paste the full job description here...',
     customSectionTitle: '3. Custom Instructions (Optional)',
     customSectionDescription: 'Guide the AI with specific requests for even better results.',
@@ -159,6 +163,10 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     companyPlaceholder: 'e.g., NoorTech, Riyadh',
     errorResumeMissing: 'Please upload a file or paste your resume text.',
     errorJobMissing: 'Please provide a job description.',
+    analyzeGenericButton: 'Analyze my CV (general review)',
+    genericModeTitle: 'General review mode',
+    genericModeDescription: 'No job description provided. The AI will review your resume for overall quality, clarity, formatting, and impact without targeting a specific role.',
+    qualityScoreLabel: 'Quality Score',
     errorInvalidFileType: 'Upload a PDF, DOCX, or TXT file.',
     errorFileTooLarge: 'File must be smaller than 5MB.',
     recentAnalysesTitle: 'Recent analyses',
@@ -267,8 +275,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     uploadLabel: 'انقر لرفع ملف',
     orDivider: 'أو',
     resumePlaceholder: 'الصق نص سيرتك الذاتية هنا...',
-    jobSectionTitle: '٢. الوصف الوظيفي',
-    jobSectionDescription: 'الصق هنا الوصف الوظيفي الخاص بالفرصة.',
+    jobSectionTitle: '٢. الوصف الوظيفي (اختياري)',
+    jobSectionDescription: 'الصق الوصف الوظيفي للفرصة، أو اتركه فارغاً للحصول على مراجعة عامة لسيرتك.',
     jobDescriptionPlaceholder: 'اكتب الوصف الوظيفي الكامل هنا...',
     customSectionTitle: '٣. تعليمات مخصصة (اختياري)',
     customSectionDescription: 'وجّه الذكاء الاصطناعي بطلبات محددة للحصول على نتائج أدق.',
@@ -286,6 +294,10 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
     companyPlaceholder: 'مثلاً: نور تك، الرياض',
     errorResumeMissing: 'يرجى رفع ملف السيرة الذاتية أو لصقها.',
     errorJobMissing: 'يرجى إدخال الوصف الوظيفي.',
+    analyzeGenericButton: 'حلّل سيرتي (مراجعة عامة)',
+    genericModeTitle: 'وضع المراجعة العامة',
+    genericModeDescription: 'لم يتم تقديم وصف وظيفي. سيراجع الذكاء الاصطناعي سيرتك من حيث الجودة والوضوح والتنسيق والتأثير دون استهداف دور معين.',
+    qualityScoreLabel: 'درجة الجودة',
     errorInvalidFileType: 'يجب رفع ملف بصيغة PDF أو DOCX أو TXT.',
     errorFileTooLarge: 'يجب ألا يتجاوز حجم الملف ٥ ميجابايت.',
     recentAnalysesTitle: 'أحدث التحليلات',

@@ -98,7 +98,7 @@ export interface CreateJobPayload {
   title?: string;
   company?: string;
   resumeText: string;
-  jobDescription: string;
+  jobDescription?: string;
   customInstructions?: string;
   resumeLang: LanguageCode;
   jdLang: LanguageCode;
