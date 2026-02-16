@@ -211,6 +211,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
     const [toast, setToast] = useState<ToastMessage | null>(null);
     const [appView, setAppView] = useState<'dashboard' | 'queue' | 'results' | 'history'>('dashboard');
+    const [refinedJobIds, setRefinedJobIds] = useState<Set<string>>(new Set());
     const [historyPage, setHistoryPage] = useState(1);
     const isDemoMode = useMemo(() => import.meta.env.VITE_DEMO_MODE === 'true', []);
     const completedJobs = useMemo(
@@ -424,6 +425,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     const handleRefine = async (jobId: string, instructions: string) => {
         const previousJob = jobsQueue.find(job => job.id === jobId);
         const previousSnapshot = previousJob ? cloneQueueItem(previousJob) : null;
+        setRefinedJobIds(prev => new Set(prev).add(jobId));
         setJobsQueue(prev => prev.map(job =>
             job.id === jobId ? { ...job, status: 'processing' } : job
         ));
@@ -594,6 +596,9 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
     // Fallback logic for actual interaction
     const selectedJob = jobsQueue.find(job => job.id === selectedJobId);
     const determineCurrentStep = (): StepId => {
+        if (selectedJob && (selectedJob.status === 'processing' || refinedJobIds.has(selectedJob.id))) {
+            return 'refine';
+        }
         if (selectedJob || appView === 'results' || (isDemoMode && previewState === 'results')) {
             return 'results';
         }
