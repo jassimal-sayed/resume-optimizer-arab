@@ -37,7 +37,7 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: true
-          VITE_API_BASE_URL: https://arab-resume.kgents.com
+          VITE_API_BASE_URL: https://arab-resumes.kgents.com
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
