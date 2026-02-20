@@ -24,8 +24,20 @@ const Navbar: React.FC<NavbarProps> = ({ userEmail }) => {
                     <div className={`flex items-center space-x-3 ${isRTL ? 'flex-row-reverse space-x-reverse' : ''}`}>
                         <LogoIcon className="w-8 h-8 text-primary-500"/>
                         <div className={`flex flex-col ${isRTL ? 'items-end text-right' : ''}`}>
-                            <span className="text-xl font-semibold text-slate-100">{t.navTitle}</span>
-                            <span className="text-xs text-slate-400 leading-tight">{t.navSubtitle}</span>
+                            <span
+                                className={`font-semibold text-slate-100 leading-tight ${
+                                    isRTL ? 'text-lg sm:text-xl' : 'text-xl'
+                                }`}
+                            >
+                                {t.navTitle}
+                            </span>
+                            <span
+                                className={`text-slate-400 leading-tight ${
+                                    isRTL ? 'text-[10px] sm:text-xs' : 'text-xs'
+                                }`}
+                            >
+                                {t.navSubtitle}
+                            </span>
                         </div>
                     </div>
                     <div className={`flex items-center space-x-4 ${isRTL ? 'flex-row-reverse space-x-reverse' : ''}`}>
