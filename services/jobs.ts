@@ -371,6 +371,35 @@ export const jobsService = {
     return data.job;
   },
 
+  async deleteJob(id: string, options: JobsServiceOptions = {}): Promise<void> {
+    if (shouldUseMockApi) {
+      mockJobs = mockJobs.filter(job => job.id !== id);
+      return;
+    }
+    const response = await fetch(`${API_BASE_URL}/jobs/${id}`, {
+      method: 'DELETE',
+      headers: buildHeaders(options.accessToken),
+      signal: options.signal,
+    });
+    await parseResponse<null>(response);
+  },
+
+  async updateJob(id: string, payload: { title: string }, options: JobsServiceOptions = {}): Promise<JobSummary> {
+    if (shouldUseMockApi) {
+      const job = mockJobs.find(j => j.id === id);
+      if (job) job.title = payload.title;
+      return toJobSummary(job!);
+    }
+    const response = await fetch(`${API_BASE_URL}/jobs/${id}`, {
+      method: 'PATCH',
+      headers: buildHeaders(options.accessToken),
+      signal: options.signal,
+      body: JSON.stringify(payload),
+    });
+    const data = await parseResponse<{ job: JobSummary }>(response);
+    return data.job;
+  },
+
   async refineJob(
     id: string,
     payload: RefineJobPayload,

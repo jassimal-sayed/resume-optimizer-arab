@@ -9,9 +9,11 @@ import JobListItem from './JobListItem';
 interface JobsQueueProps {
     jobs: JobQueueItem[];
     onSelectJob: (jobId: string) => void;
+    onDeleteJob?: (jobId: string) => void;
+    onRenameJob?: (jobId: string, newTitle: string) => void;
 }
 
-const JobsQueue: React.FC<JobsQueueProps> = ({ jobs, onSelectJob }) => {
+const JobsQueue: React.FC<JobsQueueProps> = ({ jobs, onSelectJob, onDeleteJob, onRenameJob }) => {
     const t = useTranslations();
     const { language } = useLanguage();
     const isRTL = language === 'ar';
@@ -30,6 +32,8 @@ const JobsQueue: React.FC<JobsQueueProps> = ({ jobs, onSelectJob }) => {
                             job={job}
                             disabled={job.status !== 'complete'}
                             onSelect={onSelectJob}
+                            onDelete={onDeleteJob}
+                            onRename={onRenameJob}
                             labels={{ processing: t.queueProcessing, complete: t.queueComplete }}
                             isRTL={isRTL}
                         />

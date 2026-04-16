@@ -451,6 +451,33 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
         }
     };
 
+    const handleDeleteJob = async (jobId: string) => {
+        try {
+            await jobsService.deleteJob(jobId, { accessToken: session.access_token });
+            setJobsQueue(prev => prev.filter(job => job.id !== jobId));
+            if (selectedJobId === jobId) {
+                setSelectedJobId(null);
+                setAppView('dashboard');
+            }
+            showToast('Job deleted.', 'success');
+        } catch (error) {
+            console.error(error);
+            showToast('Failed to delete job.', 'error');
+        }
+    };
+
+    const handleRenameJob = async (jobId: string, newTitle: string) => {
+        try {
+            await jobsService.updateJob(jobId, { title: newTitle }, { accessToken: session.access_token });
+            setJobsQueue(prev => prev.map(job =>
+                job.id === jobId ? { ...job, title: newTitle } : job
+            ));
+        } catch (error) {
+            console.error(error);
+            showToast('Failed to rename job.', 'error');
+        }
+    };
+
     /*
     const DevPreviewControls = () => (
         <div className="p-4 mb-8 border border-dashed rounded-lg bg-yellow-900/20 border-yellow-500/30">
@@ -511,7 +538,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                             We’re analyzing your resume against the job description. You can follow the status below and open the insights once they’re ready.
                         </p>
                     </div>
-                    <JobsQueue jobs={jobsQueue} onSelectJob={handleJobSelect} />
+                    <JobsQueue jobs={jobsQueue} onSelectJob={handleJobSelect} onDeleteJob={handleDeleteJob} onRenameJob={handleRenameJob} />
                 </div>
             );
         }
@@ -535,7 +562,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                             {t.noAnalysesMessage}
                         </div>
                     ) : (
-                        <JobsQueue jobs={historyJobs} onSelectJob={handleJobSelect} />
+                        <JobsQueue jobs={historyJobs} onSelectJob={handleJobSelect} onDeleteJob={handleDeleteJob} onRenameJob={handleRenameJob} />
                     )}
                     {showPagination && (
                         <div className={`flex flex-wrap items-center justify-between gap-4 ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -586,7 +613,7 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                                 )}
                             </div>
                         </div>
-                        <JobsQueue jobs={recentCompletedJobs} onSelectJob={handleJobSelect} />
+                        <JobsQueue jobs={recentCompletedJobs} onSelectJob={handleJobSelect} onDeleteJob={handleDeleteJob} onRenameJob={handleRenameJob} />
                     </div>
                 </div>
             </div>
