@@ -294,12 +294,24 @@ const AppPage: React.FC<{ session: Session }> = ({ session }) => {
                 const job = await jobsService.getJob(jobId, { accessToken: session.access_token });
                 syncJobToQueue(job);
                 if (job.status === 'complete') {
+                    setRefinedJobIds(prev => {
+                        if (!prev.has(jobId)) return prev;
+                        const next = new Set(prev);
+                        next.delete(jobId);
+                        return next;
+                    });
                     if (successMessage) {
                         showToast(successMessage, 'success');
                     }
                     return false;
                 }
                 if (job.status === 'failed') {
+                    setRefinedJobIds(prev => {
+                        if (!prev.has(jobId)) return prev;
+                        const next = new Set(prev);
+                        next.delete(jobId);
+                        return next;
+                    });
                     showToast('Job failed during processing.', 'error');
                     return false;
                 }
